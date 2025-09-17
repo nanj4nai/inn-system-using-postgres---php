@@ -136,3 +136,14 @@ CREATE TABLE audit_logs (
     details TEXT
 
 );
+
+CREATE TABLE payments (
+  id SERIAL PRIMARY KEY,
+  bill_id INT NOT NULL REFERENCES bills(id),
+  amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+  payment_method VARCHAR(50) NOT NULL,
+  user_id INT REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  branch_id INT REFERENCES branches(id),
+  notes TEXT
+);

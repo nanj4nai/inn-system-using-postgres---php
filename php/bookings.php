@@ -61,7 +61,7 @@ switch ($method) {
         $data = json_decode(file_get_contents("php://input"), true);
 
         // 🔹 Check if room is available before booking
-        $checkRoom = $pdo->prepare("SELECT status FROM rooms WHERE id = :room_id AND branch_id = :branch_id");
+        $checkRoom = $pdo->prepare("SELECT * FROM rooms WHERE id = :room_id AND branch_id = :branch_id");
         $checkRoom->execute([
             ':room_id'   => $data['room_id'],
             ':branch_id' => $branch_id
@@ -80,7 +80,7 @@ switch ($method) {
             exit;
         }
 
-        // 🔹 Insert booking if room is available
+        // 🔹 Insert booking
         $sql = "INSERT INTO bookings 
         (room_id, guest_id, user_id, branch_id, check_in, expected_hours, status)
         VALUES (:room_id, :guest_id, :user_id, :branch_id, :check_in, :expected_hours, 'ongoing')
@@ -98,12 +98,35 @@ switch ($method) {
 
         $booking_id = $stmt->fetchColumn();
 
-        // 🔹 Update room status to occupied
+        // 🔹 Update room status
         $roomUpdate = $pdo->prepare("UPDATE rooms SET status = 'occupied' 
-                                 WHERE id = :room_id AND branch_id = :branch_id");
+                             WHERE id = :room_id AND branch_id = :branch_id");
         $roomUpdate->execute([
             ':room_id'   => $data['room_id'],
             ':branch_id' => $branch_id
+        ]);
+
+        // 🔹 Calculate initial room charge
+        $basePrice   = (float)$room['base_price'];
+        $minHours    = (int)$room['min_hours'];
+        $extraPrice  = (float)$room['extra_hour_price'];
+        $hours       = (int)$data['expected_hours'];
+
+        $roomCharge = $basePrice;
+        if ($hours > $minHours) {
+            $roomCharge += ($hours - $minHours) * $extraPrice;
+        }
+
+        // 🔹 Create initial bill
+        $billStmt = $pdo->prepare("
+        INSERT INTO bills (booking_id, room_charge, services_charge, discount, total_amount, paid_amount, branch_id)
+        VALUES (:booking_id, :room_charge, 0, 0, :total_amount, 0, :branch_id)
+    ");
+        $billStmt->execute([
+            ':booking_id'  => $booking_id,
+            ':room_charge' => $roomCharge,
+            ':total_amount' => $roomCharge,
+            ':branch_id'   => $branch_id
         ]);
 
         log_audit($pdo, "bookings", $booking_id, "insert", $user_id, $branch_id, json_encode($data));
@@ -111,8 +134,8 @@ switch ($method) {
         echo json_encode(["message" => "Booking created", "id" => $booking_id]);
         break;
 
+
     case 'PUT':
-        // Update booking
         parse_str($_SERVER['QUERY_STRING'], $query);
         $id = $query['id'] ?? null;
         if (!$id) {
@@ -122,8 +145,13 @@ switch ($method) {
 
         $data = json_decode(file_get_contents("php://input"), true);
 
-        // 🔹 Get the room linked to this booking
-        $stmt = $pdo->prepare("SELECT room_id FROM bookings WHERE id = :id AND branch_id = :branch_id");
+        // 🔹 Get the booking and room
+        $stmt = $pdo->prepare("
+        SELECT b.*, r.base_price, r.min_hours, r.extra_hour_price 
+        FROM bookings b
+        JOIN rooms r ON b.room_id = r.id
+        WHERE b.id = :id AND b.branch_id = :branch_id
+    ");
         $stmt->execute([
             ':id'        => $id,
             ':branch_id' => $branch_id
@@ -138,7 +166,7 @@ switch ($method) {
 
         $room_id = $booking['room_id'];
 
-        // 🔹 Safeguard: if trying to set status = ongoing, ensure no other ongoing booking exists for this room
+        // 🔹 Prevent conflicts if status = ongoing
         if ($data['status'] === 'ongoing') {
             $check = $pdo->prepare("SELECT COUNT(*) FROM bookings 
                                 WHERE room_id = :room_id 
@@ -150,16 +178,14 @@ switch ($method) {
                 ':branch_id' => $branch_id,
                 ':id'        => $id
             ]);
-            $conflicts = $check->fetchColumn();
-
-            if ($conflicts > 0) {
+            if ($check->fetchColumn() > 0) {
                 http_response_code(400);
                 echo json_encode(["error" => "Room is already occupied by another ongoing booking."]);
                 exit;
             }
         }
 
-        // 🔹 Update booking record
+        // 🔹 Update booking (check_out only if completed)
         $sql = "UPDATE bookings 
             SET expected_hours = :expected_hours,
                 status = :status,
@@ -173,11 +199,44 @@ switch ($method) {
             ':id'             => $id,
             ':branch_id'      => $branch_id
         ]);
-
         $room_id = $stmt->fetchColumn();
 
-        // 🔹 If booking completed or cancelled → free the room
-        if ($data['status'] === 'completed' || $data['status'] === 'cancelled') {
+        // 🔹 If completed → finalize bill
+        if ($data['status'] === 'completed') {
+            // recalc room charge in case hours were extended
+            $basePrice   = (float)$booking['base_price'];
+            $minHours    = (int)$booking['min_hours'];
+            $extraPrice  = (float)$booking['extra_hour_price'];
+            $hours       = (int)$data['expected_hours'];
+
+            $roomCharge = $basePrice;
+            if ($hours > $minHours) {
+                $roomCharge += ($hours - $minHours) * $extraPrice;
+            }
+
+            // finalize bill
+            $updateBill = $pdo->prepare("
+            UPDATE bills
+            SET room_charge = :room_charge,
+                total_amount = :room_charge + services_charge - discount
+            WHERE booking_id = :booking_id
+        ");
+            $updateBill->execute([
+                ':room_charge' => $roomCharge,
+                ':booking_id'  => $id
+            ]);
+
+            // free the room
+            $roomUpdate = $pdo->prepare("UPDATE rooms SET status = 'available' 
+                                     WHERE id = :room_id AND branch_id = :branch_id");
+            $roomUpdate->execute([
+                ':room_id'   => $room_id,
+                ':branch_id' => $branch_id
+            ]);
+        }
+
+        // 🔹 If cancelled → just free the room
+        if ($data['status'] === 'cancelled') {
             $roomUpdate = $pdo->prepare("UPDATE rooms SET status = 'available' 
                                      WHERE id = :room_id AND branch_id = :branch_id");
             $roomUpdate->execute([
@@ -190,6 +249,7 @@ switch ($method) {
 
         echo json_encode(["message" => "Booking updated"]);
         break;
+
 
     default:
         http_response_code(405);

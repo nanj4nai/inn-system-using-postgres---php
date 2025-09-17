@@ -90,6 +90,9 @@ async function loadData() {
                         <button onclick="editBooking(${b.id})" class="text-yellow-600 hover:underline">
                             <i class="fa-solid fa-edit"></i> Edit
                         </button>
+                        <button onclick="openServiceModal(${b.id})" class="text-green-600 hover:underline">
+                            <i class="fa-solid fa-plus"></i> Add Service
+                        </button>
                     </td>
                 </tr>
             `;
@@ -162,6 +165,48 @@ function updateBookingPreview() {
     window.bookingCheckIn = checkIn;
 }
 
+function openServiceModal(bookingId) {
+    document.getElementById("serviceModal").classList.remove("hidden");
+    document.getElementById("serviceBookingId").value = bookingId;
+    loadServices(); // populate dropdown
+}
+
+function closeServiceModal() {
+    document.getElementById("serviceModal").classList.add("hidden");
+    document.getElementById("serviceForm").reset();
+}
+
+async function loadServices() {
+    const res = await fetch("php/services.php");
+    const services = await res.json();
+    const select = document.getElementById("serviceSelect");
+    select.innerHTML = `<option value="">Select Service</option>`;
+    services.forEach(s => {
+        select.innerHTML += `<option value="${s.id}">${s.name} - ₱${s.price}</option>`;
+    });
+}
+
+document.getElementById("serviceForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+        booking_id: parseInt(document.getElementById("serviceBookingId").value),
+        service_id: parseInt(document.getElementById("serviceSelect").value),
+        qty: parseInt(document.getElementById("serviceQty").value)
+    };
+
+    const res = await fetch("php/booking_services.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (res.status === 403) return window.location.href = "login.html";
+
+    closeServiceModal();
+    loadData(); // refresh bookings table with updated bill
+};
+
+
 // Event listeners for modal inputs
 document.getElementById("hoursStay").addEventListener("input", updateBookingPreview);
 document.getElementById("roomSelect").addEventListener("change", updateBookingPreview);
@@ -171,3 +216,5 @@ document.getElementById("bookingModal").addEventListener("hidden", closeBookingM
 
 // Load data on page ready
 document.addEventListener("DOMContentLoaded", loadData);
+
+

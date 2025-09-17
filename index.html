@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inn System Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+        crossorigin="anonymous" />
+    <style>
+        /* Apply Poppins as overall font */
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Custom style for sidebar responsive toggle */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            #sidebar.active {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="bg-blue-600 text-white w-64 p-6 flex flex-col justify-between fixed md:relative md:translate-x-0 z-50">
+            <div>
+                <h1 class="text-3xl font-bold mb-10">Inn System</h1>
+                <nav>
+                    <ul class="space-y-6">
+                        <li><a href="index.html" class="flex items-center space-x-4 hover:text-gray-200 transition">
+                                <i class="fa-solid fa-house text-lg"></i><span class="text-lg">Dashboard</span></a></li>
+                        <li><a href="inventory.html"
+                                class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-boxes-stacked text-lg"></i><span>Inventory</span></a></li>
+                        <li><a href="guests.html" class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-user text-lg"></i><span class="text-lg">Guests</span></a></li>
+                        <li><a href="bookings.html"
+                                class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-calendar-check text-lg"></i><span
+                                    class="text-lg">Bookings</span></a></li>
+                        <li><a href="rooms.html" class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-bed text-lg"></i><span class="text-lg">Rooms</span></a></li>
+                        <li><a href="services.html" class="flex items-center space-x-4 text-white font-semibold"><i
+                                    class="fa-solid fa-concierge-bell text-lg"></i><span
+                                    class="text-lg">Services</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-chart-line text-lg"></i><span class="text-lg">Reports</span></a>
+                        </li>
+                        <li><a href="#" class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-gear text-lg"></i><span class="text-lg">Settings</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div>
+                <p class="text-sm">© 2025 Inn System</p>
+            </div>
+        </div>
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col md:ml-4">
+            <!-- Navbar -->
+            <header class="bg-white shadow p-4 flex justify-between items-center">
+                <button id="menu-button" class="md:hidden p-2 rounded hover:bg-gray-200">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h2 class="text-2xl font-semibold">Dashboard</h2>
+                <div class="flex items-center space-x-4">
+                    <img class="h-10 w-10 rounded-full" src="https://via.placeholder.com/150" alt="User Avatar">
+                    <a href="php/logout.php"
+                        class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">
+                        Logout
+                    </a>
+                </div>
+
+            </header>
+            <!-- Page Content -->
+            <main class="p-8 overflow-y-auto">
+                <!-- Stat Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+                    <div class="bg-white shadow rounded-lg p-6">
+                        <h3 class="text-xl font-semibold text-blue-500">Total Bookings</h3>
+                        <p class="mt-4 text-4xl font-bold">120</p>
+                    </div>
+                    <div class="bg-white shadow rounded-lg p-6">
+                        <h3 class="text-xl font-semibold text-green-500">Available Rooms</h3>
+                        <p class="mt-4 text-4xl font-bold">35</p>
+                    </div>
+                    <div class="bg-white shadow rounded-lg p-6">
+                        <h3 class="text-xl font-semibold text-yellow-500">Revenue</h3>
+                        <p class="mt-4 text-4xl font-bold">$4,500</p>
+                    </div>
+                </div>
+                <!-- Booking Trends Chart Section -->
+                <div class="bg-white shadow rounded-lg p-6 mb-8">
+                    <h3 class="text-2xl font-semibold mb-4">Booking Trends</h3>
+                    <div id="chart" class="h-64 flex items-center justify-center text-gray-400">
+                        Chart Placeholder
+                    </div>
+                </div>
+                <!-- Recent Bookings Table -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-2xl font-semibold mb-4">Recent Bookings</h3>
+                    <table class="min-w-full table-auto">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 text-left">Guest</th>
+                                <th class="px-6 py-3 text-left">Room</th>
+                                <th class="px-6 py-3 text-left">Date</th>
+                                <th class="px-6 py-3 text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-t">
+                                <td class="px-6 py-3">John Doe</td>
+                                <td class="px-6 py-3">101</td>
+                                <td class="px-6 py-3">2025-09-10</td>
+                                <td class="px-6 py-3"><span class="text-green-500">Confirmed</span></td>
+                            </tr>
+                            <tr class="border-t">
+                                <td class="px-6 py-3">Jane Smith</td>
+                                <td class="px-6 py-3">102</td>
+                                <td class="px-6 py-3">2025-09-11</td>
+                                <td class="px-6 py-3"><span class="text-yellow-500">Pending</span></td>
+                            </tr>
+                            <!-- ...other rows if needed... -->
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+    <!-- JavaScript for sidebar toggle -->
+    <script>
+        const menuButton = document.getElementById('menu-button');
+        const sidebar = document.getElementById('sidebar');
+
+        menuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+    </script>
+</body>
+
+</html>

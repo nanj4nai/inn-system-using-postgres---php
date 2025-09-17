@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rooms - Inn System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css"
+        crossorigin="anonymous" />
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            #sidebar.active {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="bg-blue-600 text-white w-64 p-6 flex flex-col justify-between fixed md:relative md:translate-x-0 z-50">
+            <div>
+                <h1 class="text-3xl font-bold mb-10">Inn System</h1>
+                <nav>
+                    <ul class="space-y-6">
+                        <li><a href="index.html" class="flex items-center space-x-4 hover:text-gray-200 transition">
+                                <i class="fa-solid fa-house text-lg"></i><span class="text-lg">Dashboard</span></a></li>
+                        <li><a href="inventory.html"
+                                class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-boxes-stacked text-lg"></i><span>Inventory</span></a></li>
+                        <li><a href="guests.html" class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-user text-lg"></i><span class="text-lg">Guests</span></a></li>
+                        <li><a href="bookings.html"
+                                class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-calendar-check text-lg"></i><span
+                                    class="text-lg">Bookings</span></a></li>
+                        <li><a href="rooms.html" class="flex items-center space-x-4 text-white font-semibold"><i
+                                    class="fa-solid fa-bed text-lg"></i><span class="text-lg">Rooms</span></a></li>
+                        <li><a href="services.html"
+                                class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-concierge-bell text-lg"></i><span
+                                    class="text-lg">Services</span></a></li>
+                        <li><a href="#" class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-chart-line text-lg"></i><span class="text-lg">Reports</span></a>
+                        </li>
+                        <li><a href="#" class="flex items-center space-x-4 hover:text-gray-200 transition"><i
+                                    class="fa-solid fa-gear text-lg"></i><span class="text-lg">Settings</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div>
+                <p class="text-sm">© 2025 Inn System</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col md:ml-4">
+            <!-- Navbar -->
+            <header class="bg-white shadow p-4 flex justify-between items-center">
+                <button id="menu-button" class="md:hidden p-2 rounded hover:bg-gray-200">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <h2 class="text-2xl font-semibold">Rooms</h2>
+                <div class="flex items-center space-x-4">
+                    <img class="h-10 w-10 rounded-full" src="https://via.placeholder.com/150" alt="User Avatar">
+                    <a href="php/logout.php"
+                        class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">Logout</a>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="p-8 overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-semibold">Manage Rooms</h3>
+                    <button id="addRoomBtn"
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                        <i class="fa-solid fa-plus mr-2"></i> Add New Room
+                    </button>
+                </div>
+                <!-- Notifications -->
+                <div id="notification" class="hidden mb-4"></div>
+
+                <!-- Rooms Table -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <table class="min-w-full table-auto">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left">Room Number</th>
+                                <th class="px-6 py-3 text-left">Type</th>
+                                <th class="px-6 py-3 text-left">Price</th>
+                                <th class="px-6 py-3 text-left">Capacity</th>
+                                <th class="px-6 py-3 text-left">Status</th>
+                                <th class="px-6 py-3 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roomsTable">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Add/Edit Room Modal -->
+                <div id="roomModal"
+                    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
+                    <div class="bg-white rounded-lg w-1/2 p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-2xl font-semibold" id="modalTitle">Add New Room</h3>
+                            <button onclick="closeModal()" class="text-gray-600 hover:text-gray-800">
+                                <i class="fa-solid fa-xmark text-xl"></i>
+                            </button>
+                        </div>
+                        <form id="roomForm">
+                            <input type="hidden" id="roomId">
+                            <div class="mb-4">
+                                <label class="block mb-2 font-medium">Room Number</label>
+                                <input type="text" id="roomNumber" class="w-full px-3 py-2 border rounded" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block mb-2 font-medium">Type</label>
+                                <input type="text" id="roomType" class="w-full px-3 py-2 border rounded" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block mb-2 font-medium">Minimum Hours</label>
+                                <input type="number" id="roomMinHours" class="w-full px-3 py-2 border rounded" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block mb-2 font-medium">Base Price</label>
+                                <input type="number" id="roomBasePrice" class="w-full px-3 py-2 border rounded"
+                                    required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block mb-2 font-medium">Extra Hour Price</label>
+                                <input type="number" id="roomExtraPrice" class="w-full px-3 py-2 border rounded"
+                                    required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block mb-2 font-medium">Room Capacity</label>
+                                <input type="number" id="roomCapacity" class="w-full px-3 py-2 border rounded" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block mb-2 font-medium">Status</label>
+                                <select id="roomStatus" class="w-full px-3 py-2 border rounded" required>
+                                    <option value="available">Available</option>
+                                    <option value="occupied">Occupied</option>
+                                    <option value="maintenance">Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit"
+                                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="js/rooms.js"></script>
+</body>
+
+</html>
